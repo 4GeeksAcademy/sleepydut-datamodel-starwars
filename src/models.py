@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Enum, ForeignKey, func, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import List
+from typing import List, Optional
 
 db = SQLAlchemy()
 
@@ -47,23 +47,49 @@ class Planet(db.Model):
         }
 
 class Character(db.Model):
+    __tablename__ = 'character'
+    
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     age: Mapped[int] = mapped_column(Integer, nullable=False)
     eye_color: Mapped[str] = mapped_column(String(50), nullable=False)
-    homeworld_id: Mapped[int] = mapped_column(ForeignKey('planet.id'), nullable=True) # Optional link
+    homeworld_id: Mapped[Optional[int]] = mapped_column(ForeignKey('planet.id'), nullable=True) # Optional link
+
+    appearances: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    affiliations: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    locations: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    vehicles: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    weapons: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    
+    gender: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    dimensions: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    species: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    tool: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     favorited_by_users: Mapped[List["CharacterFavorite"]] = relationship(back_populates="character")
-
     homeworld: Mapped["Planet"] = relationship()
 
     def serialize(self):
+        def split_string(field_value):
+            return [item.strip() for item in (field_value or '').split(',') if item.strip()]
+
         return {
             "id": self.id,
             "name": self.name,
             "age": self.age,
             "eye_color": self.eye_color,
             "homeworld_id": self.homeworld_id,
+
+            "gender": self.gender,
+            "dimensions": self.dimensions,
+            "species": self.species,
+            "tool": self.tool,
+            
+            "appearances": split_string(self.appearances),
+            "affiliations": split_string(self.affiliations),
+            "locations": split_string(self.locations),
+            "vehicles": split_string(self.vehicles),
+            "weapons": split_string(self.weapons),
         }
 
 class PlanetFavorite(db.Model):
